@@ -3,23 +3,36 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 
+const API_KEY = process.env.REACT_APP_NEWS_API_KEY
+
 const BlogPage = () => {
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchArticles()
   }, [])
 
   const fetchArticles = async () => {
-    const apiKey = "92770c79a95c4c8481141d32762eb30b"
-    const url = `https://newsapi.org/v2/everything?q=AI&apiKey=${apiKey}`
     try {
+      const url = `https://newsapi.org/v2/everything?q=AI&apiKey=${API_KEY}`
       const response = await fetch(url)
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
-      setArticles(data.articles)
+
+      if (data.status === "ok" && Array.isArray(data.articles)) {
+        setArticles(data.articles)
+      } else {
+        throw new Error("Unexpected API response structure")
+      }
     } catch (error) {
       console.error("Error fetching news:", error)
+      setError(`Failed to fetch articles: ${error.message}`)
     } finally {
       setLoading(false)
     }
@@ -29,6 +42,22 @@ const BlogPage = () => {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-red-500">Error: {error}</p>
+      </div>
+    )
+  }
+
+  if (!articles || articles.length === 0) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>No articles found.</p>
       </div>
     )
   }
