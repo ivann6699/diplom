@@ -64,6 +64,23 @@
   animation: fadeIn 0.5s ease-out;
 }
 
+.bg-dark-gray {
+  background-color: #2d3748; 
+}
+
+.text-white {
+  color: #ffffff;
+}
+
+.focus:ring-primary {
+  --tw-ring-color: #3b82f6; 
+}
+
+select option {
+  background-color: #2d3748;
+  color: #ffffff;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

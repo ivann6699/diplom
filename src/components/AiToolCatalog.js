@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "../supabase"
@@ -10,19 +8,61 @@ const AiToolCatalog = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
   const [categories, setCategories] = useState([])
+  const [savedCounts, setSavedCounts] = useState({}) 
+  const [sortBy, setSortBy] = useState("") 
+  const [userSavedTools, setUserSavedTools] = useState([]) 
   const navigate = useNavigate()
 
   useEffect(() => {
     fetchTools()
+    fetchSavedCounts()
+    fetchUserSavedTools()
   }, [])
 
   const fetchTools = async () => {
     const { data, error } = await supabase.from("ai_tools").select("*")
-    if (error) console.error(error)
-    else {
-      setTools(data)
-      setCategories([...new Set(data.map((tool) => tool.category))])
+    if (error) {
+      console.error("Error fetching tools:", error)
+      return
     }
+    setTools(data || []) 
+    setCategories([...new Set(data.map((tool) => tool.category))])
+  }
+
+  const fetchSavedCounts = async () => {
+    try {
+      const { data, error } = await supabase.from("saved_tools").select("tool_id")
+      if (error) throw error
+
+      const counts = data.reduce((acc, { tool_id }) => {
+        acc[tool_id] = (acc[tool_id] || 0) + 1
+        return acc
+      }, {})
+
+      setSavedCounts(counts)
+    } catch (error) {
+      console.error("Error fetching saved counts:", error)
+    }
+  }
+
+  const fetchUserSavedTools = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    const user = session?.user
+    if (!user) return 
+
+    const { data, error } = await supabase
+      .from("saved_tools")
+      .select("tool_id")
+      .eq("user_id", user.id)
+
+    if (error) {
+      console.error("Error fetching user saved tools:", error)
+      return
+    }
+
+    setUserSavedTools(data.map((item) => item.tool_id))
   }
 
   const filteredTools = tools.filter(
@@ -30,6 +70,13 @@ const AiToolCatalog = () => {
       tool.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
       (selectedCategory === "" || tool.category === selectedCategory),
   )
+
+  const sortedTools = [...filteredTools].sort((a, b) => {
+    if (sortBy === "popularity") {
+      return (savedCounts[b.id] || 0) - (savedCounts[a.id] || 0) 
+    }
+    return 0 
+  })
 
   const saveTool = async (toolId) => {
     const {
@@ -63,6 +110,8 @@ const AiToolCatalog = () => {
     if (error) console.error(error)
     else {
       alert("Инструмент успешно сохранен!")
+      fetchSavedCounts() 
+      fetchUserSavedTools() 
     }
   }
 
@@ -117,6 +166,14 @@ const AiToolCatalog = () => {
             </option>
           ))}
         </select>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="px-4 py-2 rounded-lg bg-input text-foreground border border-border focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition-all duration-200"
+        >
+          <option value="">Сортировать по</option>
+          <option value="popularity">Популярности</option>
+        </select>
       </motion.div>
 
       <motion.div
@@ -125,14 +182,25 @@ const AiToolCatalog = () => {
         transition={{ duration: 0.5, delay: 0.8 }}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
       >
-        {filteredTools.map((tool, index) => (
+        {sortedTools.map((tool, index) => (
           <motion.div
             key={tool.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            className="card-glow rounded-xl p-6 transition-all duration-300 hover:transform hover:scale-105"
+            className="card-glow rounded-xl p-6 transition-all duration-300 hover:transform hover:scale-105 relative"
           >
+            {savedCounts[tool.id] > 0 && (
+              <div
+                className={`absolute top-2 right-2 rounded-full px-3 py-1 text-sm ${
+                  userSavedTools.includes(tool.id)
+                    ? "bg-green-500 text-white" 
+                    : "bg-accent text-accent-foreground" 
+                }`}
+              >
+                {savedCounts[tool.id]}
+              </div>
+            )}
             <h2 className="text-xl font-semibold mb-3">{tool.title}</h2>
             <p className="text-muted-foreground mb-4">{tool.description}</p>
             <div className="flex items-center gap-2 mb-4">
@@ -163,4 +231,3 @@ const AiToolCatalog = () => {
 }
 
 export default AiToolCatalog
-

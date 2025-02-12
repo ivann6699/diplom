@@ -1,65 +1,57 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 
 const API_KEY = process.env.REACT_APP_NEWS_API_KEY
 
 const BlogPage = () => {
-  const [articles, setArticles] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [sortBy, setSortBy] = useState("publishedAt"); 
 
   useEffect(() => {
-    fetchArticles()
-  }, [])
+    fetchArticles();
+  }, []);
 
   const fetchArticles = async () => {
     try {
-      const url = `https://newsapi.org/v2/everything?q=AI&apiKey=${API_KEY}`
-      const response = await fetch(url)
+      const url = `https://newsapi.org/v2/everything?q=AI&sortBy=${sortBy}&apiKey=${API_KEY}`;
+      const response = await fetch(url);
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (data.status === "ok" && Array.isArray(data.articles)) {
-        setArticles(data.articles)
+        setArticles(data.articles);
       } else {
-        throw new Error("Unexpected API response structure")
+        throw new Error("Unexpected API response structure");
       }
     } catch (error) {
-      console.error("Error fetching news:", error)
-      setError(`Failed to fetch articles: ${error.message}`)
+      console.error("Error fetching news:", error);
+      setError(`Failed to fetch articles: ${error.message}`);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
+  const handleSortChange = (event) => {
+    setSortBy(event.target.value);
+    fetchArticles(); // Перезагружаем статьи с новым параметром сортировки
+  };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    )
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
   if (error) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-red-500">Error: {error}</p>
-      </div>
-    )
+    return <div className="flex justify-center items-center h-screen">Error: {error}</div>;
   }
 
   if (!articles || articles.length === 0) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p>No articles found.</p>
-      </div>
-    )
+    return <div className="flex justify-center items-center h-screen">No articles found.</div>;
   }
 
   return (
@@ -77,6 +69,22 @@ const BlogPage = () => {
       >
         Блог
       </motion.h1>
+
+      {/* Выпадающий список для сортировки */}
+      <div className="mb-8">
+        <label htmlFor="sortBy" className="mr-2">Сортировать по:</label>
+        <select
+          id="sortBy"
+          value={sortBy}
+          onChange={handleSortChange}
+          className="p-2 border rounded bg-dark-gray text-white focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="publishedAt">Дате публикации</option>
+          <option value="relevancy">Релевантности</option>
+          <option value="popularity">Популярности</option>
+        </select>
+      </div>
+
       <motion.ul
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -109,8 +117,7 @@ const BlogPage = () => {
         ))}
       </motion.ul>
     </motion.div>
-  )
-}
+  );
+};
 
-export default BlogPage
-
+export default BlogPage;

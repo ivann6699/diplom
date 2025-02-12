@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect, useCallback } from "react"
 import { Link } from "react-router-dom"
 import { supabase } from "../supabase"
@@ -20,7 +18,7 @@ const SavedTools = () => {
     } else {
       setLoading(false)
     }
-  }, []) // Пустой массив зависимостей, так как fetchUserData не зависит от внешних переменных
+  }, [])
 
   const fetchSavedTools = async (userId) => {
     try {
@@ -47,9 +45,27 @@ const SavedTools = () => {
     }
   }
 
+  const deleteSavedTool = async (toolId) => {
+    if (window.confirm("Вы уверены, что хотите удалить этот инструмент из сохраненных?")) {
+      try {
+        const { error } = await supabase.from("saved_tools").delete().eq("user_id", user.id).eq("tool_id", toolId)
+
+        if (error) {
+          throw error
+        }
+
+        setSavedTools((prevTools) => prevTools.filter((tool) => tool.id !== toolId))
+        alert("Инструмент успешно удален из сохраненных.")
+      } catch (error) {
+        console.error("Ошибка при удалении инструмента:", error)
+        alert("Не удалось удалить инструмент. Попробуйте еще раз.")
+      }
+    }
+  }
+
   useEffect(() => {
     fetchUserData()
-  }, [fetchUserData]) // Добавляем fetchUserData в массив зависимостей
+  }, [fetchUserData])
 
   if (loading) {
     return (
@@ -127,7 +143,15 @@ const SavedTools = () => {
             transition={{ duration: 0.5, delay: index * 0.1 }}
             className="card-glow rounded-xl p-6 transition-all duration-300 hover:transform hover:scale-105"
           >
-            <h3 className="text-xl font-semibold mb-3">{tool.title}</h3>
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="text-xl font-semibold">{tool.title}</h3>
+              <button
+                onClick={() => deleteSavedTool(tool.id)}
+                className="text-sm px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+              >
+                Удалить
+              </button>
+            </div>
             <p className="text-muted-foreground mb-4">{tool.description}</p>
             <a
               href={tool.official_link}
@@ -145,3 +169,4 @@ const SavedTools = () => {
 }
 
 export default SavedTools
+
