@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { motion } from 'framer-motion';
 
@@ -7,13 +7,11 @@ const UserProfile = () => {
     first_name: '',
     last_name: '',
     phone: '',
-    university: '',
-    avatar_url: ''
+    university: ''
   });
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState([]);
   const [editMode, setEditMode] = useState(false);
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchUserData();
@@ -37,8 +35,7 @@ const UserProfile = () => {
       first_name: '',
       last_name: '',
       phone: '',
-      university: '',
-      avatar_url: ''
+      university: ''
     });
     setProgress(progressData || []);
     setLoading(false);
@@ -59,35 +56,6 @@ const UserProfile = () => {
       setEditMode(false);
       await fetchUserData();
     }
-  };
-
-  const handleAvatarUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const { data: { user } } = await supabase.auth.getUser();
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-    const filePath = `avatars/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(filePath, file);
-
-    if (uploadError) {
-      console.error('Error uploading avatar:', uploadError);
-      return;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(filePath);
-
-    setProfile({ ...profile, avatar_url: publicUrl });
-  };
-
-  const triggerFileInput = () => {
-    fileInputRef.current.click();
   };
 
   if (loading) {
@@ -115,34 +83,11 @@ const UserProfile = () => {
           <h2 className="text-xl font-semibold mb-4">Личные данные</h2>
           
           <div className="flex flex-col items-center mb-6">
-            <div 
-              onClick={editMode ? triggerFileInput : null}
-              className={`relative w-24 h-24 rounded-full mb-4 overflow-hidden ${editMode ? 'cursor-pointer' : ''}`}
-            >
-              {profile.avatar_url ? (
-                <img 
-                  src={profile.avatar_url} 
-                  alt="Аватар" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-800 flex items-center justify-center text-white text-2xl">
-                  {profile.first_name.charAt(0)}{profile.last_name.charAt(0)}
-                </div>
-              )}
-              {editMode && (
-                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                  <span className="text-white text-sm">Изменить</span>
-                </div>
-              )}
+            <div className="w-24 h-24 rounded-full mb-4 overflow-hidden">
+              <div className="w-full h-full bg-gray-800 flex items-center justify-center text-white text-2xl">
+                {profile.first_name.charAt(0)}{profile.last_name.charAt(0)}
+              </div>
             </div>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleAvatarUpload}
-              accept="image/*"
-              className="hidden"
-            />
             <h3 className="text-xl font-medium">
               {profile.first_name} {profile.last_name}
             </h3>
@@ -218,7 +163,8 @@ const UserProfile = () => {
           ) : (
             <p className="text-muted-foreground">Вы еще не проходили тесты</p>
           )}
-        </div>      </div>
+        </div>
+      </div>
     </motion.div>
   );
 };
