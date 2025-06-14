@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 
 const API_KEY = process.env.REACT_APP_NEWS_API_KEY;
-const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
+const CORS_PROXY = "https://api.allorigins.win/raw?url=";
 
 const BlogPage = () => {
   const [articles, setArticles] = useState([]);
@@ -11,14 +11,10 @@ const BlogPage = () => {
 
   const fetchArticles = useCallback(async () => {
     try {
-      // Using the top headlines endpoint with CORS proxy
-      const url = `${CORS_PROXY}https://newsapi.org/v2/top-headlines?country=ru&category=technology&apiKey=${API_KEY}`;
-      const response = await fetch(url, {
-        headers: {
-          'Origin': window.location.origin,
-          'X-Requested-With': 'XMLHttpRequest'
-        }
-      });
+      const newsApiUrl = `https://newsapi.org/v2/top-headlines?country=ru&category=technology&apiKey=${API_KEY}`;
+      const url = `${CORS_PROXY}${encodeURIComponent(newsApiUrl)}`;
+      
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
