@@ -3,18 +3,21 @@ import { motion } from "framer-motion";
 
 const API_KEY = process.env.REACT_APP_NEWS_API_KEY;
 const CORS_PROXY = "https://api.allorigins.win/raw?url=";
+const ARTICLES_PER_PAGE = 10;
 
 const BlogPage = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState("publishedAt");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const fetchArticles = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const newsApiUrl = `https://newsapi.org/v2/everything?q=(AI OR "искусственный интеллект")&language=ru&sortBy=${sortBy}&pageSize=20&apiKey=${API_KEY}`;
+      const newsApiUrl = `https://newsapi.org/v2/everything?q=(AI OR "искусственный интеллект")&language=ru&sortBy=${sortBy}&pageSize=${ARTICLES_PER_PAGE}&page=${currentPage}&apiKey=${API_KEY}`;
       const url = `${CORS_PROXY}${encodeURIComponent(newsApiUrl)}`;
       
       console.log('Fetching from URL:', url);
@@ -46,6 +49,10 @@ const BlogPage = () => {
         } else {
           setArticles(aiArticles);
         }
+        
+        // Calculate total pages based on total results
+        const totalResults = data.totalResults || 0;
+        setTotalPages(Math.ceil(totalResults / ARTICLES_PER_PAGE));
       } else {
         console.error('Unexpected API response:', data);
         throw new Error("Unexpected API response structure");
@@ -56,14 +63,20 @@ const BlogPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [sortBy]);
+  }, [sortBy, currentPage]);
 
   useEffect(() => {
     fetchArticles();
-  }, [fetchArticles, sortBy]);
+  }, [fetchArticles]);
 
   const handleSortChange = (event) => {
     setSortBy(event.target.value);
+    setCurrentPage(1); // Reset to first page when sorting changes
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (loading) {
@@ -168,6 +181,64 @@ const BlogPage = () => {
           </motion.li>
         ))}
       </motion.ul>
+
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <div className="mt-8 flex justify-center items-center space-x-2">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`px-4 py-2 rounded-md ${
+              currentPage === 1
+                ? 'bg-gray-300 cursor-not-allowed'
+                : 'bg-primary text-white hover:bg-primary/80'
+            } transition-colors`}
+          >
+            Назад
+          </button>
+          
+          <div className="flex items-center space-x-2">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+              
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => handlePageChange(pageNum)}
+                  className={`w-10 h-10 rounded-md ${
+                    currentPage === pageNum
+                      ? 'bg-primary text-white'
+                      : 'bg-input hover:bg-input/80'
+                  } transition-colors`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={`px-4 py-2 rounded-md ${
+              currentPage === totalPages
+                ? 'bg-gray-300 cursor-not-allowed'
+                : 'bg-primary text-white hover:bg-primary/80'
+            } transition-colors`}
+          >
+            Вперед
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 };
