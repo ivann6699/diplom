@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { supabase } from "../supabase"
 import { motion } from "framer-motion"
 
-const TOOLS_PER_PAGE = 6;
+const TOOLS_PER_PAGE = 12;
 
 const AiToolCatalog = () => {
   const [tools, setTools] = useState([])
