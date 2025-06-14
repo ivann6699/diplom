@@ -11,27 +11,43 @@ const BlogPage = () => {
 
   const fetchArticles = useCallback(async () => {
     try {
-      const newsApiUrl = `https://newsapi.org/v2/top-headlines?country=ru&category=technology&apiKey=${API_KEY}`;
+      // Modified query to get more results
+      const newsApiUrl = `https://newsapi.org/v2/everything?q=(AI OR "искусственный интеллект")&language=ru&sortBy=publishedAt&apiKey=${API_KEY}`;
       const url = `${CORS_PROXY}${encodeURIComponent(newsApiUrl)}`;
+      
+      console.log('Fetching from URL:', url); // Debug log
       
       const response = await fetch(url);
 
       if (!response.ok) {
+        console.error('Response not OK:', response.status, response.statusText); // Debug log
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('API Response:', data); // Debug log
 
       if (data.status === "ok" && Array.isArray(data.articles)) {
-        // Filter articles to only include AI-related content
+        // Simplified filtering to get more results
         const aiArticles = data.articles.filter(article => 
-          article.title?.toLowerCase().includes('ai') ||
-          article.title?.toLowerCase().includes('искусственный интеллект') ||
-          article.description?.toLowerCase().includes('ai') ||
-          article.description?.toLowerCase().includes('искусственный интеллект')
+          article.title && article.description && (
+            article.title.toLowerCase().includes('ai') ||
+            article.title.toLowerCase().includes('искусственный интеллект') ||
+            article.description.toLowerCase().includes('ai') ||
+            article.description.toLowerCase().includes('искусственный интеллект')
+          )
         );
-        setArticles(aiArticles);
+        
+        console.log('Filtered articles:', aiArticles.length); // Debug log
+        
+        if (aiArticles.length === 0) {
+          // If no AI articles found, show all technology articles
+          setArticles(data.articles);
+        } else {
+          setArticles(aiArticles);
+        }
       } else {
+        console.error('Unexpected API response:', data); // Debug log
         throw new Error("Unexpected API response structure");
       }
     } catch (error) {
@@ -71,8 +87,14 @@ const BlogPage = () => {
 
   if (!articles || articles.length === 0) {
     return (
-      <div className="flex justify-center items-center h-screen text-center px-4">
-        <p className="text-xl text-muted-foreground">Статьи не найдены.</p>
+      <div className="flex flex-col justify-center items-center h-screen text-center px-4">
+        <p className="text-xl text-muted-foreground mb-4">Статьи не найдены.</p>
+        <button 
+          onClick={() => fetchArticles()} 
+          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors"
+        >
+          Обновить
+        </button>
       </div>
     );
   }
