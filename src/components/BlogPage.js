@@ -9,10 +9,10 @@ const BlogPage = () => {
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState("publishedAt");
 
-  // Обернем fetchArticles в useCallback
   const fetchArticles = useCallback(async () => {
     try {
-      const url = `https://newsapi.org/v2/everything?q=AI&sortBy=${sortBy}&language=ru&apiKey=${API_KEY}`;
+      // Using the top headlines endpoint instead of everything
+      const url = `https://newsapi.org/v2/top-headlines?country=ru&category=technology&apiKey=${API_KEY}`;
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -22,7 +22,14 @@ const BlogPage = () => {
       const data = await response.json();
 
       if (data.status === "ok" && Array.isArray(data.articles)) {
-        setArticles(data.articles);
+        // Filter articles to only include AI-related content
+        const aiArticles = data.articles.filter(article => 
+          article.title?.toLowerCase().includes('ai') ||
+          article.title?.toLowerCase().includes('искусственный интеллект') ||
+          article.description?.toLowerCase().includes('ai') ||
+          article.description?.toLowerCase().includes('искусственный интеллект')
+        );
+        setArticles(aiArticles);
       } else {
         throw new Error("Unexpected API response structure");
       }
@@ -32,27 +39,41 @@ const BlogPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [sortBy]); // Добавляем sortBy в зависимости, чтобы fetchArticles обновлялся при изменении сортировки
+  }, []); // Removed sortBy dependency as we're using top headlines
 
   useEffect(() => {
     fetchArticles();
-  }, [fetchArticles]); // Теперь fetchArticles включен в зависимости
-
-  const handleSortChange = (event) => {
-    setSortBy(event.target.value);
-    // fetchArticles вызывается автоматически благодаря зависимости в useEffect
-  };
+  }, [fetchArticles]);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="flex justify-center items-center h-screen">Error: {error}</div>;
+    return (
+      <div className="flex flex-col justify-center items-center h-screen text-center px-4">
+        <h2 className="text-2xl font-bold text-red-500 mb-4">Ошибка загрузки</h2>
+        <p className="text-muted-foreground">{error}</p>
+        <button 
+          onClick={() => fetchArticles()} 
+          className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors"
+        >
+          Попробовать снова
+        </button>
+      </div>
+    );
   }
 
   if (!articles || articles.length === 0) {
-    return <div className="flex justify-center items-center h-screen">No articles found.</div>;
+    return (
+      <div className="flex justify-center items-center h-screen text-center px-4">
+        <p className="text-xl text-muted-foreground">Статьи не найдены.</p>
+      </div>
+    );
   }
 
   return (
@@ -70,21 +91,6 @@ const BlogPage = () => {
       >
         Блог
       </motion.h1>
-
-      {/* Выпадающий список для сортировки */}
-      <div className="mb-8">
-        <label htmlFor="sortBy" className="mr-2">Сортировать по:</label>
-        <select
-          id="sortBy"
-          value={sortBy}
-          onChange={handleSortChange}
-          className="p-2 border rounded bg-dark-gray text-white focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="publishedAt">Дате публикации</option>
-          <option value="relevancy">Релевантности</option>
-          <option value="popularity">Популярности</option>
-        </select>
-      </div>
 
       <motion.ul
         initial={{ opacity: 0 }}
@@ -111,9 +117,10 @@ const BlogPage = () => {
               </a>
             </h2>
             <p className="text-muted-foreground mb-4">{article.description}</p>
-            <p className="text-sm text-muted-foreground">
-              <strong>Источник:</strong> {article.source.name}
-            </p>
+            <div className="flex justify-between items-center text-sm text-muted-foreground">
+              <p><strong>Источник:</strong> {article.source.name}</p>
+              <p>{new Date(article.publishedAt).toLocaleDateString('ru-RU')}</p>
+            </div>
           </motion.li>
         ))}
       </motion.ul>
