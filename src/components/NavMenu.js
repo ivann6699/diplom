@@ -1,19 +1,22 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Menu, Transition } from "@headlessui/react";
 import { 
   ChevronDownIcon,
   UserIcon,
   AcademicCapIcon,
   BookmarkIcon,
-  ArrowLeftOnRectangleIcon
+  ArrowLeftOnRectangleIcon,
+  Bars3Icon,
+  XMarkIcon
 } from "@heroicons/react/24/outline";
 
 const NavMenu = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -63,6 +66,15 @@ const NavMenu = () => {
     navigate("/");
   };
 
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    closeMobileMenu();
+  }, [location]);
+
   return (
     <motion.nav
       initial={{ opacity: 0, y: -20 }}
@@ -78,6 +90,7 @@ const NavMenu = () => {
             </Link>
           </div>
 
+          {/* Desktop Menu */}
           <div className="hidden sm:block">
             <div className="flex items-center space-x-4">
               {menuItems.map((item) => (
@@ -191,8 +204,101 @@ const NavMenu = () => {
               )}
             </div>
           </div>
+
+          {/* Mobile Menu Button */}
+          <div className="sm:hidden">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 focus:outline-none"
+            >
+              {isMobileMenuOpen ? (
+                <XMarkIcon className="h-6 w-6" />
+              ) : (
+                <Bars3Icon className="h-6 w-6" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="sm:hidden bg-background border-b border-border"
+          >
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              {menuItems.map((item) => (
+                (!item.auth || isLoggedIn) && (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
+                      location.pathname === item.path
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                    }`}
+                  >
+                    {item.name}
+                  </Link>
+                )
+              ))}
+
+              {!isLoggedIn ? (
+                <Link
+                  to="/login"
+                  className="block px-3 py-2 rounded-md text-base font-medium bg-gradient text-primary hover:bg-gradient-to-r hover:from-blue-700 hover:to-indigo-700 transition-all duration-200"
+                >
+                  Войти
+                </Link>
+              ) : (
+                <div className="space-y-1">
+                  <Link
+                    to="/profile"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex items-center">
+                      <UserIcon className="mr-2 h-5 w-5" />
+                      Личный кабинет
+                    </div>
+                  </Link>
+                  <Link
+                    to="/saved"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex items-center">
+                      <BookmarkIcon className="mr-2 h-5 w-5" />
+                      Сохраненные
+                    </div>
+                  </Link>
+                  <Link
+                    to="/learning"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex items-center">
+                      <AcademicCapIcon className="mr-2 h-5 w-5" />
+                      Обучение
+                    </div>
+                  </Link>
+                  <button
+                    onClick={logout}
+                    className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <div className="flex items-center">
+                      <ArrowLeftOnRectangleIcon className="mr-2 h-5 w-5" />
+                      Выйти
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.nav>
   );
 };
