@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 
 const API_KEY = process.env.REACT_APP_NEWS_API_KEY;
+const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
 
 const BlogPage = () => {
   const [articles, setArticles] = useState([]);
@@ -10,9 +11,14 @@ const BlogPage = () => {
 
   const fetchArticles = useCallback(async () => {
     try {
-      // Using the top headlines endpoint instead of everything
-      const url = `https://newsapi.org/v2/top-headlines?country=ru&category=technology&apiKey=${API_KEY}`;
-      const response = await fetch(url);
+      // Using the top headlines endpoint with CORS proxy
+      const url = `${CORS_PROXY}https://newsapi.org/v2/top-headlines?country=ru&category=technology&apiKey=${API_KEY}`;
+      const response = await fetch(url, {
+        headers: {
+          'Origin': window.location.origin,
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -38,7 +44,7 @@ const BlogPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []); // Removed sortBy dependency as we're using top headlines
+  }, []);
 
   useEffect(() => {
     fetchArticles();
