@@ -5,12 +5,15 @@ import { useNavigate } from "react-router-dom";
 import TestModal from "./TestModal";
 import ArticleCard from "./ArticleCard";
 
+const ARTICLES_PER_PAGE = 5;
+
 const LearningPage = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [difficultyFilter, setDifficultyFilter] = useState("all");
   const [currentTest, setCurrentTest] = useState(null);
   const [passedTests, setPassedTests] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
 
   const checkAuth = useCallback(async () => {
@@ -63,10 +66,29 @@ const LearningPage = () => {
     return articles.filter(a => a.difficulty_level === difficultyFilter);
   }, [articles, difficultyFilter]);
 
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredArticles.length / ARTICLES_PER_PAGE);
+  }, [filteredArticles]);
+
+  const paginatedArticles = useMemo(() => {
+    const startIndex = (currentPage - 1) * ARTICLES_PER_PAGE;
+    const endIndex = startIndex + ARTICLES_PER_PAGE;
+    return filteredArticles.slice(startIndex, endIndex);
+  }, [filteredArticles, currentPage]);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   useEffect(() => {
     fetchArticles();
     fetchTestProgress();
   }, [fetchArticles, fetchTestProgress]);
+
+  useEffect(() => {
+    setCurrentPage(1); // Reset to first page when filter changes
+  }, [difficultyFilter]);
 
   if (loading) return <div className="flex justify-center items-center h-screen">Загрузка...</div>;
 
@@ -92,7 +114,7 @@ const LearningPage = () => {
       </div>
       
       <div className="space-y-6">
-        {filteredArticles.map((article) => (
+        {paginatedArticles.map((article) => (
           <ArticleCard
             key={article.id}
             article={article}
@@ -101,6 +123,64 @@ const LearningPage = () => {
           />
         ))}
       </div>
+
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <div className="mt-8 flex justify-center items-center space-x-2">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`px-4 py-2 rounded-md ${
+              currentPage === 1
+                ? 'bg-gray-300 cursor-not-allowed'
+                : 'bg-primary text-white hover:bg-primary/80'
+            } transition-colors`}
+          >
+            Назад
+          </button>
+          
+          <div className="flex items-center space-x-2">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+              
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => handlePageChange(pageNum)}
+                  className={`w-10 h-10 rounded-md ${
+                    currentPage === pageNum
+                      ? 'bg-primary text-white'
+                      : 'bg-input hover:bg-input/80'
+                  } transition-colors`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={`px-4 py-2 rounded-md ${
+              currentPage === totalPages
+                ? 'bg-gray-300 cursor-not-allowed'
+                : 'bg-primary text-white hover:bg-primary/80'
+            } transition-colors`}
+          >
+            Вперед
+          </button>
+        </div>
+      )}
 
       {currentTest && (
         <TestModal
