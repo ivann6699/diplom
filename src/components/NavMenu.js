@@ -108,7 +108,7 @@ const NavMenu = () => {
                   <div>
                     <Menu.Button className="flex items-center space-x-2 focus:outline-none">
                       <div className="flex items-center">
-                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
+                        <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-white">
                           {userProfile?.first_name?.charAt(0) || ''}
                           {userProfile?.last_name?.charAt(0) || ''}
                         </div>
