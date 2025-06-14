@@ -5,6 +5,8 @@ import AiToolCatalog from "./components/AiToolCatalog"
 import SavedTools from "./components/SavedTools"
 import BlogPage from "./components/BlogPage"
 import LoginPage from "./components/LoginPage"
+import LearningPage from "./components/LearningPage";
+import UserProfile from './components/UserProfile';
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
             <Route path="/saved" element={<SavedTools />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/learning" element={<LearningPage />} />
+            <Route path="/profile" element={<UserProfile />} />
           </Routes>
         </AnimatePresence>
       </div>

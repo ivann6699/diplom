@@ -1,21 +1,18 @@
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 
-const API_KEY = process.env.REACT_APP_NEWS_API_KEY
+const API_KEY = process.env.REACT_APP_NEWS_API_KEY;
 
 const BlogPage = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sortBy, setSortBy] = useState("publishedAt"); 
+  const [sortBy, setSortBy] = useState("publishedAt");
 
-  useEffect(() => {
-    fetchArticles();
-  }, []);
-
-  const fetchArticles = async () => {
+  // Обернем fetchArticles в useCallback
+  const fetchArticles = useCallback(async () => {
     try {
-      const url = `https://newsapi.org/v2/everything?q=AI&sortBy=${sortBy}&apiKey=${API_KEY}`;
+      const url = `https://newsapi.org/v2/everything?q=AI&sortBy=${sortBy}&language=ru&apiKey=${API_KEY}`;
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -35,11 +32,15 @@ const BlogPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [sortBy]); // Добавляем sortBy в зависимости, чтобы fetchArticles обновлялся при изменении сортировки
+
+  useEffect(() => {
+    fetchArticles();
+  }, [fetchArticles]); // Теперь fetchArticles включен в зависимости
 
   const handleSortChange = (event) => {
     setSortBy(event.target.value);
-    fetchArticles(); // Перезагружаем статьи с новым параметром сортировки
+    // fetchArticles вызывается автоматически благодаря зависимости в useEffect
   };
 
   if (loading) {

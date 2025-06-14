@@ -4,8 +4,11 @@
   "private": true,
   "dependencies": {
     "@craco/craco": "^7.1.0",
+    "@headlessui/react": "^2.2.0",
+    "@heroicons/react": "^2.2.0",
     "@supabase/auth-helpers-react": "^0.5.0",
     "@supabase/supabase-js": "^2.48.1",
+    "axios": "^1.8.4",
     "dotenv": "^16.4.7",
     "framer-motion": "^10.12.16",
     "react": "^18.2.0",
@@ -13,7 +16,8 @@
     "react-router-dom": "^6.11.1",
     "react-scripts": "^5.0.1",
     "resolve-url-loader": "^4.0.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "xml2js": "^0.6.2"
   },
   "scripts": {
     "start": "react-scripts start",
