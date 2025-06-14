@@ -126,7 +126,7 @@ const UserProfile = () => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-primary flex items-center justify-center text-black text-2xl">
+                <div className="w-full h-full bg-gray-800 flex items-center justify-center text-white text-2xl">
                   {profile.first_name.charAt(0)}{profile.last_name.charAt(0)}
                 </div>
               )}
