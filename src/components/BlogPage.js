@@ -8,24 +8,25 @@ const BlogPage = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sortBy, setSortBy] = useState("publishedAt");
 
   const fetchArticles = useCallback(async () => {
     try {
-      // Modified query to get more results
-      const newsApiUrl = `https://newsapi.org/v2/everything?q=(AI OR "искусственный интеллект")&language=ru&sortBy=publishedAt&apiKey=${API_KEY}`;
+      // Modified query to get more results with sorting
+      const newsApiUrl = `https://newsapi.org/v2/everything?q=(AI OR "искусственный интеллект")&language=ru&sortBy=${sortBy}&apiKey=${API_KEY}`;
       const url = `${CORS_PROXY}${encodeURIComponent(newsApiUrl)}`;
       
-      console.log('Fetching from URL:', url); // Debug log
+      console.log('Fetching from URL:', url);
       
       const response = await fetch(url);
 
       if (!response.ok) {
-        console.error('Response not OK:', response.status, response.statusText); // Debug log
+        console.error('Response not OK:', response.status, response.statusText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('API Response:', data); // Debug log
+      console.log('API Response:', data);
 
       if (data.status === "ok" && Array.isArray(data.articles)) {
         // Simplified filtering to get more results
@@ -38,7 +39,7 @@ const BlogPage = () => {
           )
         );
         
-        console.log('Filtered articles:', aiArticles.length); // Debug log
+        console.log('Filtered articles:', aiArticles.length);
         
         if (aiArticles.length === 0) {
           // If no AI articles found, show all technology articles
@@ -47,7 +48,7 @@ const BlogPage = () => {
           setArticles(aiArticles);
         }
       } else {
-        console.error('Unexpected API response:', data); // Debug log
+        console.error('Unexpected API response:', data);
         throw new Error("Unexpected API response structure");
       }
     } catch (error) {
@@ -56,11 +57,15 @@ const BlogPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [sortBy]); // Add sortBy to dependencies
 
   useEffect(() => {
     fetchArticles();
   }, [fetchArticles]);
+
+  const handleSortChange = (event) => {
+    setSortBy(event.target.value);
+  };
 
   if (loading) {
     return (
@@ -114,6 +119,23 @@ const BlogPage = () => {
       >
         Блог
       </motion.h1>
+
+      {/* Sorting dropdown */}
+      <div className="mb-8 flex justify-end">
+        <div className="flex items-center space-x-2">
+          <label htmlFor="sortBy" className="text-sm text-muted-foreground">Сортировать по:</label>
+          <select
+            id="sortBy"
+            value={sortBy}
+            onChange={handleSortChange}
+            className="px-3 py-2 rounded-md bg-input border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="publishedAt">Дате публикации</option>
+            <option value="relevancy">Релевантности</option>
+            <option value="popularity">Популярности</option>
+          </select>
+        </div>
+      </div>
 
       <motion.ul
         initial={{ opacity: 0 }}
