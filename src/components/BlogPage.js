@@ -7,7 +7,6 @@ const BlogPage = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sortBy, setSortBy] = useState("publishedAt");
 
   const fetchArticles = useCallback(async () => {
     try {
