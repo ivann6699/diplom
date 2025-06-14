@@ -11,9 +11,10 @@ const BlogPage = () => {
   const [sortBy, setSortBy] = useState("publishedAt");
 
   const fetchArticles = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      // Modified query to get more results with sorting
-      const newsApiUrl = `https://newsapi.org/v2/everything?q=(AI OR "искусственный интеллект")&language=ru&sortBy=${sortBy}&apiKey=${API_KEY}`;
+      const newsApiUrl = `https://newsapi.org/v2/everything?q=(AI OR "искусственный интеллект")&language=ru&sortBy=${sortBy}&pageSize=20&apiKey=${API_KEY}`;
       const url = `${CORS_PROXY}${encodeURIComponent(newsApiUrl)}`;
       
       console.log('Fetching from URL:', url);
@@ -29,7 +30,6 @@ const BlogPage = () => {
       console.log('API Response:', data);
 
       if (data.status === "ok" && Array.isArray(data.articles)) {
-        // Simplified filtering to get more results
         const aiArticles = data.articles.filter(article => 
           article.title && article.description && (
             article.title.toLowerCase().includes('ai') ||
@@ -42,7 +42,6 @@ const BlogPage = () => {
         console.log('Filtered articles:', aiArticles.length);
         
         if (aiArticles.length === 0) {
-          // If no AI articles found, show all technology articles
           setArticles(data.articles);
         } else {
           setArticles(aiArticles);
@@ -57,11 +56,11 @@ const BlogPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [sortBy]); // Add sortBy to dependencies
+  }, [sortBy]);
 
   useEffect(() => {
     fetchArticles();
-  }, [fetchArticles]);
+  }, [fetchArticles, sortBy]);
 
   const handleSortChange = (event) => {
     setSortBy(event.target.value);
